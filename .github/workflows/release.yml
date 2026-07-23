@@ -1,0 +1,47 @@
+# Release terraform-provider-joopler to the public Terraform Registry.
+# Runs on a SemVer tag: builds the cross-platform binaries with GoReleaser,
+# signs the checksums with the Joopler GPG key, and publishes a GitHub release
+# with the signed archives + manifest the Registry ingests.
+#
+# Required repo secrets:
+#   GPG_PRIVATE_KEY  - ASCII-armored private key (gpg --armor --export-secret-keys)
+#   PASSPHRASE       - the key's passphrase (omit if the key has none)
+# GITHUB_TOKEN is provided automatically.
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  goreleaser:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: "go.mod"
+          cache: true
+
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@v6
+        id: import_gpg
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.PASSPHRASE }}
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # GoReleaser signs the checksums with this fingerprint (see .goreleaser.yml).
+          GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}

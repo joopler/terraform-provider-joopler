@@ -1,0 +1,6 @@
+# Go build output and Terraform provider artifacts.
+terraform-provider-joopler
+terraform-provider-joopler.exe
+/dist/
+*.test
+vendor/
