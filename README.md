@@ -10,6 +10,21 @@ a key. So Terraform owns the structure of your program and a human owns the
 claims - both auditable, the structure as code and the sign-offs as signed ledger
 records.
 
+## Before you start: you need a workspace
+
+This provider manages an **existing** Joopler workspace - it configures a program,
+it does not create an account. So `terraform init` will succeed for anyone (the
+provider is public), and `terraform plan` will stop with `Missing Joopler API key`
+until you supply one.
+
+- **Have a workspace?** Mint a write-scoped key (`jpl_...`) at
+  [app.joopler.com/developers](https://app.joopler.com/developers).
+- **Do not have one?** Joopler is currently invitation-only. Get in touch at
+  [joopler.com](https://joopler.com).
+
+The key is write-scoped and the API default-denies everything outside the surface
+below, so a leaked key cannot read your evidence or sign anything.
+
 ## Usage
 
 ```hcl

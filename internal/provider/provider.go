@@ -46,7 +46,8 @@ func (p *jooplerProvider) Schema(_ context.Context, _ provider.SchemaRequest, re
 			"api_key": schema.StringAttribute{
 				Optional:            true,
 				Sensitive:           true,
-				MarkdownDescription: "Write-scoped tenant API key (`jpl_...`). Defaults to `JOOPLER_API_KEY`. Mint it on the Developers page.",
+				MarkdownDescription: "Write-scoped tenant API key (`jpl_...`). Defaults to `JOOPLER_API_KEY`. " +
+					"Mint one at https://app.joopler.com/developers - it requires an existing Joopler workspace.",
 			},
 		},
 	}
@@ -62,9 +63,18 @@ func (p *jooplerProvider) Configure(ctx context.Context, req provider.ConfigureR
 	apiURL := firstNonEmpty(cfg.APIURL.ValueString(), os.Getenv("JOOPLER_API_URL"), "https://api.joopler.com")
 	apiKey := firstNonEmpty(cfg.APIKey.ValueString(), os.Getenv("JOOPLER_API_KEY"))
 	if apiKey == "" {
+		// Say where a key comes from, and that it comes from an ACCOUNT. Anyone
+		// reaching this has already had `terraform init` succeed - the provider is
+		// public on the registry - so the failure reads like a misconfiguration when
+		// the truth is they need a workspace first. Naming the page without saying
+		// that sends them to a login they may not be able to create.
 		resp.Diagnostics.AddError(
 			"Missing Joopler API key",
-			"Set `api_key` in the provider block or the JOOPLER_API_KEY environment variable to a write-scoped key (jpl_...).",
+			"This provider manages an existing Joopler workspace, so it needs a write-scoped API key (jpl_...).\n\n"+
+				"Set it in the provider block as `api_key`, or in the JOOPLER_API_KEY environment variable.\n\n"+
+				"If you already have a workspace, mint a key at https://app.joopler.com/developers.\n"+
+				"If you do not have one yet, Joopler is currently invitation-only - talk to us at "+
+				"https://joopler.com and we will get you set up.",
 		)
 		return
 	}
